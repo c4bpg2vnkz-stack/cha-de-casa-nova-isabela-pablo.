@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chá de Casa Nova</title>
+<style>
+:root{--bg:#f5f2ed;--card:#fffdfa;--text:#4c4842;--muted:#8b857c;--line:#ded8cf;--accent:#8b8175;--ok:#69796b;}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Georgia,serif}
+header{padding:52px 20px 32px;text-align:center} h1{font-weight:400;font-size:36px;margin:0 0 8px} header p{font-family:Arial,sans-serif;color:var(--muted);margin:0}
+main{max-width:920px;margin:auto;padding:0 18px 60px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px} input,select{padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:white;color:var(--text);font-family:Arial,sans-serif}
+input{flex:1;min-width:220px} .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 2px 8px #00000008}
+.cat{font:11px Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)} h3{font-size:20px;font-weight:400;margin:9px 0 16px} button{width:100%;border:0;border-radius:10px;padding:12px;background:var(--accent);color:white;font:14px Arial,sans-serif;cursor:pointer} button.taken{background:#ddd8d0;color:#777;cursor:not-allowed}
+.stats{font:13px Arial,sans-serif;color:var(--muted);margin:8px 0 22px;text-align:center}
+.modal{display:none;position:fixed;inset:0;background:#0005;align-items:center;justify-content:center;padding:20px} .modal.show{display:flex}
+.box{background:#fffdfa;border-radius:18px;padding:24px;max-width:420px;width:100%} .box h2{font-weight:400;margin-top:0} .box input{width:100%;margin:8px 0 14px} .secondary{background:transparent;color:var(--text);border:1px solid var(--line);margin-top:8px}
+.notice{background:#ebe6de;padding:12px 15px;border-radius:12px;font:13px Arial,sans-serif;color:#686158;margin-bottom:18px}
+</style></head>
+<body>
+<header><h1>Chá de Casa Nova</h1><p>Escolha um presente com carinho 💛</p></header>
+<main>
+<div class="notice">Os presentes já escolhidos aparecem como <b>“Já escolhido”</b>. O nome de quem reservou não é exibido.</div>
+<div class="controls"><input id="search" placeholder="Pesquisar presente..."><select id="cat"><option value="">Todas as categorias</option></select></div>
+<div class="stats" id="stats"></div><div class="grid" id="grid"></div>
+</main>
+<div class="modal" id="modal"><div class="box">
+<h2>Escolher presente</h2><p id="chosen"></p><input id="guest" placeholder="Seu nome"><button id="confirm">Confirmar escolha</button><button class="secondary" id="cancel">Cancelar</button>
+</div></div>
+<script>
+const ITEMS=[{"id": 1, "name": "Jogo de copos", "category": "Cozinha"}, {"id": 2, "name": "Jogo de pratos", "category": "Cozinha"}, {"id": 3, "name": "Jogo de talheres", "category": "Cozinha"}, {"id": 4, "name": "Kit de sobremesa", "category": "Cozinha"}, {"id": 5, "name": "Jogo de xícaras", "category": "Cozinha"}, {"id": 6, "name": "Jogo de panelas", "category": "Cozinha"}, {"id": 7, "name": "Liquidificador", "category": "Cozinha"}, {"id": 8, "name": "Panela de arroz", "category": "Cozinha"}, {"id": 9, "name": "Cafeteira", "category": "Cozinha"}, {"id": 10, "name": "Jarra para suco", "category": "Cozinha"}, {"id": 11, "name": "Tábua de carne", "category": "Cozinha"}, {"id": 12, "name": "Fruteira", "category": "Cozinha"}, {"id": 13, "name": "Escorredor de louça", "category": "Cozinha"}, {"id": 14, "name": "Potes para mantimentos", "category": "Cozinha"}, {"id": 15, "name": "Potes herméticos", "category": "Cozinha"}, {"id": 16, "name": "Travessas", "category": "Cozinha"}, {"id": 17, "name": "Assadeiras", "category": "Cozinha"}, {"id": 18, "name": "Forma de bolo", "category": "Cozinha"}, {"id": 19, "name": "Tigelas", "category": "Cozinha"}, {"id": 20, "name": "Escorredor de macarrão", "category": "Cozinha"}, {"id": 21, "name": "Ralador", "category": "Cozinha"}, {"id": 22, "name": "Abridor de latas/garrafas", "category": "Cozinha"}, {"id": 23, "name": "Descanso de panela", "category": "Cozinha"}, {"id": 24, "name": "Luvas térmicas", "category": "Cozinha"}, {"id": 25, "name": "Lixeira para cozinha", "category": "Cozinha"}, {"id": 26, "name": "Jogo de lençol", "category": "Quarto"}, {"id": 27, "name": "Jogo de toalha", "category": "Banheiro"}, {"id": 28, "name": "Edredom", "category": "Quarto"}, {"id": 29, "name": "Protetor de colchão", "category": "Quarto"}, {"id": 30, "name": "Travesseiros", "category": "Quarto"}, {"id": 31, "name": "Manta/cobertor", "category": "Quarto"}, {"id": 32, "name": "Jogo de fronhas", "category": "Quarto"}, {"id": 33, "name": "Jogo de tapetes", "category": "Casa"}, {"id": 34, "name": "Tapete para banheiro", "category": "Banheiro"}, {"id": 35, "name": "Cortina para banheiro", "category": "Banheiro"}, {"id": 36, "name": "Cesto para roupas", "category": "Casa"}, {"id": 37, "name": "Cabides", "category": "Casa"}, {"id": 38, "name": "Organizadores", "category": "Casa"}, {"id": 39, "name": "Cesto de lixo", "category": "Casa"}, {"id": 40, "name": "Vassoura", "category": "Limpeza"}, {"id": 41, "name": "Rodo", "category": "Limpeza"}, {"id": 42, "name": "Pá de lixo", "category": "Limpeza"}, {"id": 43, "name": "Balde", "category": "Limpeza"}, {"id": 44, "name": "Mop", "category": "Limpeza"}, {"id": 45, "name": "Kit de produtos de limpeza", "category": "Limpeza"}, {"id": 46, "name": "Vaso decorativo", "category": "Decoração"}, {"id": 47, "name": "Plantas", "category": "Decoração"}, {"id": 48, "name": "Almofadas", "category": "Decoração"}, {"id": 49, "name": "Manta para sofá", "category": "Decoração"}, {"id": 50, "name": "Jogo americano", "category": "Mesa posta"}, {"id": 51, "name": "Toalha de mesa", "category": "Mesa posta"}, {"id": 52, "name": "Centro de mesa", "category": "Decoração"}, {"id": 53, "name": "Aromatizador de ambiente", "category": "Decoração"}];
+const API_URL="COLE_A_URL_DO_WEB_APP_AQUI";
+let selected=null;
+const grid=document.getElementById('grid'), search=document.getElementById('search'), cat=document.getElementById('cat');
+[...new Set(ITEMS.map(x=>x.category))].sort().forEach(c=>cat.insertAdjacentHTML('beforeend',`<option>${c}</option>`));
+let state={}; // preenchido pelo servidor
+function render(){
+ const q=search.value.toLowerCase(), c=cat.value;
+ const list=ITEMS.filter(x=>(!q||x.name.toLowerCase().includes(q))&&(!c||x.category===c));
+ grid.innerHTML=list.map(x=>{const taken=state[x.id];return `<div class="card"><div class="cat">${x.category}</div><h3>${x.name}</h3><button class="${taken?'taken':''}" ${taken?'disabled':''} onclick="openModal(${x.id})">${taken?'Já escolhido':'Quero este presente'}</button></div>`}).join('');
+ const total=ITEMS.length, done=Object.values(state).filter(Boolean).length;
+ document.getElementById('stats').textContent=`${done} de ${total} presentes já escolhidos`;
+}
+async function load(){
+ if(API_URL.startsWith("COLE_")){state={};render();return;}
+ try{const r=await fetch(API_URL); state=await r.json();render();}catch(e){render();}
+}
+function openModal(id){if(state[id])return;selected=id;document.getElementById('chosen').textContent=ITEMS.find(x=>x.id===id).name;document.getElementById('guest').value='';document.getElementById('modal').classList.add('show');}
+document.getElementById('cancel').onclick=()=>document.getElementById('modal').classList.remove('show');
+document.getElementById('confirm').onclick=async()=>{
+ const name=document.getElementById('guest').value.trim(); if(!name)return alert('Digite seu nome.');
+ if(API_URL.startsWith("COLE_")){alert('O modelo está pronto. Falta apenas conectar o endereço do Web App.');return;}
+ const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({id:selected,name})}); const ans=await r.json();
+ if(ans.ok){state[selected]=true;document.getElementById('modal').classList.remove('show');render();} else alert('Esse presente acabou de ser escolhido por outra pessoa.');
+};
+search.oninput=render; cat.onchange=render; load();
+</script></body></html>
